@@ -25,3 +25,18 @@ class CreateUserSchema(UserBaseSchema):
 class LoginUserSchema(BaseModel):
     email:EmailStr
     password:constr(min_length=8)
+
+
+class UserResponseSchema(UserBaseSchema):
+    id:str
+    pass
+
+class UserResponse(BaseModel):
+    status:str
+    user:UserResponseSchema
+
+
+class FilteredUserResponse(UserBaseSchema):
+    id:str
+
+
