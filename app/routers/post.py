@@ -68,3 +68,25 @@ def update_post(id: str, payload: schemas.UpdatePostSchema, user_id: str = Depen
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f'No post with this id: {id} found')
     return postEntity(updated_post)
+
+
+@router.get('/{id}')
+def get_post(id: str, user_id: str = Depends(require_user)):
+    if not ObjectId.is_valid(id):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Invalid id: {id}")
+    pipeline = [
+        {'$match': {'_id': ObjectId(id)}},
+        {'$lookup': {'from': 'users', 'localField': 'user',
+                     'foreignField': '_id', 'as': 'user'}},
+        {'$unwind': '$user'},
+    ]
+    db_cursor = Post.aggregate(pipeline)
+    results = list(db_cursor)
+
+    if len(results) == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"No post with this id: {id} found")
+
+    post = postListEntity(results)[0]
+    return post
