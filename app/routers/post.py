@@ -54,3 +54,17 @@ def create_post(post: schemas.CreatePostSchema, user_id: str ):
     except DuplicateKeyError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                             detail=f"Post with title: '{post.title}' already exists")
+
+
+
+@router.put('/{id}')
+def update_post(id: str, payload: schemas.UpdatePostSchema, user_id: str = Depends(require_user)):
+    if not ObjectId.is_valid(id):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Invalid id: {id}")
+    updated_post = Post.find_one_and_update(
+        {'_id': ObjectId(id)}, {'$set': payload.dict(exclude_none=True)}, return_document=ReturnDocument.AFTER)
+    if not updated_post:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f'No post with this id: {id} found')
+    return postEntity(updated_post)
